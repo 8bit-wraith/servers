@@ -201,3 +201,17 @@ docker build -t mcp/memory -f src/memory/Dockerfile .
 ## License
 
 This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+
+## Local manager regression tests
+
+With Node.js 26 (validated with 26.10.0), run:
+
+```sh
+node --test src/memory/tests/batch.test.cjs
+```
+
+These dependency-free tests strip TypeScript from the actual manager class and
+use temporary synthetic JSONL files. They check duplicate handling within and
+across batches, fresh-process reads and persisted deletion. They do not start an
+MCP server or validate SDK integration, TypeScript type checking, concurrent
+writers, or crash-safe storage. Existing duplicate records are not migrated.
