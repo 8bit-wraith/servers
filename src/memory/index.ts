@@ -63,7 +63,12 @@ class KnowledgeGraphManager {
 
   async createEntities(entities: Entity[]): Promise<Entity[]> {
     const graph = await this.loadGraph();
-    const newEntities = entities.filter(e => !graph.entities.some(existingEntity => existingEntity.name === e.name));
+    const seenNames = new Set(graph.entities.map(e => e.name));
+    const newEntities = entities.filter(e => {
+      if (seenNames.has(e.name)) return false;
+      seenNames.add(e.name);
+      return true;
+    });
     graph.entities.push(...newEntities);
     await this.saveGraph(graph);
     return newEntities;
@@ -71,11 +76,14 @@ class KnowledgeGraphManager {
 
   async createRelations(relations: Relation[]): Promise<Relation[]> {
     const graph = await this.loadGraph();
-    const newRelations = relations.filter(r => !graph.relations.some(existingRelation => 
-      existingRelation.from === r.from && 
-      existingRelation.to === r.to && 
-      existingRelation.relationType === r.relationType
-    ));
+    const relationKey = (r: Relation) => JSON.stringify([r.from, r.to, r.relationType]);
+    const seenRelations = new Set(graph.relations.map(relationKey));
+    const newRelations = relations.filter(r => {
+      const key = relationKey(r);
+      if (seenRelations.has(key)) return false;
+      seenRelations.add(key);
+      return true;
+    });
     graph.relations.push(...newRelations);
     await this.saveGraph(graph);
     return newRelations;
@@ -88,7 +96,12 @@ class KnowledgeGraphManager {
       if (!entity) {
         throw new Error(`Entity with name ${o.entityName} not found`);
       }
-      const newObservations = o.contents.filter(content => !entity.observations.includes(content));
+      const seenObservations = new Set(entity.observations);
+      const newObservations = o.contents.filter(content => {
+        if (seenObservations.has(content)) return false;
+        seenObservations.add(content);
+        return true;
+      });
       entity.observations.push(...newObservations);
       return { entityName: o.entityName, addedObservations: newObservations };
     });
